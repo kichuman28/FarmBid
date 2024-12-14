@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'login_page.dart';
 import 'widgets/loading_animation.dart';
 import 'widgets/bottom_nav_wrapper.dart';

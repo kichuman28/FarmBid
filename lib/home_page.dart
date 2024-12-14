@@ -185,6 +185,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
+            // Your Interests Section hidden
 
             // Your Posts Section
             Padding(
@@ -251,55 +252,6 @@ class _HomePageState extends State<HomePage> {
                         children: docs.map((doc) {
                           final data = doc.data() as Map<String, dynamic>;
                           return _buildFutureHarvestCard(data, doc.id);
-                        }).toList(),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            // Featured Categories
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Featured Categories',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  StreamBuilder<Map<String, int>>(
-                    stream: _getCategoryCounts(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      final categoryCounts = snapshot.data ??
-                          {
-                            'Vegetables': 0,
-                            'Fruits': 0,
-                            'Grains': 0,
-                            'Dairy': 0,
-                          };
-
-                      return GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
-                        children: categoryCounts.entries.map((entry) {
-                          return _buildCategoryCard(
-                            entry.key,
-                            'assets/${entry.key.toLowerCase()}.png',
-                            '${entry.value} items',
-                          );
                         }).toList(),
                       );
                     },
@@ -406,110 +358,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCategoryCard(String title, String imagePath, String itemCount) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            _getCategoryIcon(title),
-            size: 40,
-            color: Colors.green,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            itemCount,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'vegetables':
-        return Icons.eco;
-      case 'fruits':
-        return Icons.apple;
-      case 'grains':
-        return Icons.grass;
-      case 'dairy':
-        return Icons.water_drop;
-      default:
-        return Icons.category;
-    }
-  }
-
-  Widget _buildTrendingAuctions() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('auction_items')
-          .orderBy('currentBid', descending: true)
-          .limit(3)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return const Text('Something went wrong');
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        return Column(
-          children: (snapshot.data?.docs ?? []).map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.trending_up, color: Colors.green),
-                ),
-                title: Text(data['name'] ?? 'Unknown Item'),
-                subtitle: Text('Current Bid: ₹${data['currentBid']}'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  // Navigate to auction detail
-                },
-              ),
-            );
-          }).toList(),
-        );
-      },
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
-
   Widget _buildFutureHarvestCard(Map<String, dynamic> data, String docId) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final bool isOwner = data['sellerId'] == currentUserId;
@@ -570,6 +418,54 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  Widget _buildTrendingAuctions() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('auction_items')
+          .orderBy('currentBid', descending: true)
+          .limit(3)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Text('Something went wrong');
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return Column(
+          children: (snapshot.data?.docs ?? []).map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.trending_up, color: Colors.green),
+                ),
+                title: Text(data['name'] ?? 'Unknown Item'),
+                subtitle: Text('Current Bid: ₹${data['currentBid']}'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  // Navigate to auction detail
+                },
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 

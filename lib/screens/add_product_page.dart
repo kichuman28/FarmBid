@@ -293,7 +293,7 @@ class _AddProductPageState extends State<AddProductPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildImagePreview(),
+            // _buildImagePreview(),
             TextField(
               controller: _nameController,
               decoration: InputDecoration(labelText: 'Product Name'),

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/activity_item.dart';
 import '../services/user_service.dart';
 import '../screens/interests_page.dart';
+import '../screens/financial_assistance_page.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -180,47 +181,25 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
 
-            // Recent Activity
+            // Financial Assistance Button
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Recent Activity',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FinancialAssistancePage(),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  StreamBuilder<List<ActivityItem>>(
-                    stream: _userService.getUserActivities(user?.uid ?? ''),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      final activities = snapshot.data ?? [];
-                      if (activities.isEmpty) {
-                        return const Center(
-                          child: Text('No recent activity'),
-                        );
-                      }
-
-                      return Column(
-                        children: activities.map((activity) {
-                          return _buildActivityItem(
-                            activity.title,
-                            activity.subtitle,
-                            _formatTimestamp(activity.timestamp),
-                            _getActivityIcon(activity.type),
-                          );
-                        }).toList(),
-                      );
-                    },
-                  ),
-                ],
+                  );
+                },
+                icon: const Icon(Icons.monetization_on),
+                label: const Text('Apply for Financial Assistance'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.all(16),
+                  minimumSize: const Size.fromHeight(50),
+                  backgroundColor: Colors.green,
+                ),
               ),
             ),
           ],
