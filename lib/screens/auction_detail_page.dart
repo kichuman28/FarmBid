@@ -327,23 +327,20 @@ class AuctionDetailPage extends StatelessWidget {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Please confirm that you have received the product and are satisfied with it.'),
-                  SizedBox(height: 16),
                   TextField(
                     controller: confirmationController,
-                    maxLines: 3,
                     decoration: InputDecoration(
                       labelText: 'Confirmation Message',
-                      hintText: 'I confirm that I have received the product and am satisfied with it.',
-                      border: OutlineInputBorder(),
+                      hintText: 'Describe the condition of the received product',
                     ),
+                    maxLines: 3,
                   ),
                   SizedBox(height: 16),
                   Row(
                     children: [
                       Checkbox(
                         value: isAgreed,
-                        onChanged: (value) {
+                        onChanged: (bool? value) {
                           setState(() {
                             isAgreed = value ?? false;
                           });
@@ -375,13 +372,19 @@ class AuctionDetailPage extends StatelessWidget {
                     
                     final currentUser = FirebaseAuth.instance.currentUser;
                     if (currentUser != null) {
-                      await _auctionService.confirmDelivery(
+                      final success = await _auctionService.confirmDelivery(
                         item.id,
                         currentUser.uid,
                         confirmationController.text,
                       );
-                      Navigator.pop(context); // Close dialog
-                      Navigator.pop(context); // Return to previous screen
+                      if (success) {
+                        Navigator.pop(context);
+                        _showRatingDialog(context);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to confirm delivery. Please try again.')),
+                        );
+                      }
                     }
                   },
                   child: Text('Confirm Delivery'),
@@ -389,6 +392,75 @@ class AuctionDetailPage extends StatelessWidget {
               ],
             );
           }
+        );
+      },
+    );
+  }
+
+  void _showRatingDialog(BuildContext context) {
+    double rating = 3.0;
+    final reviewController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Rate Seller'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 32,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            rating = index + 1.0;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  SizedBox(height: 16),
+                  TextField(
+                    controller: reviewController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: 'Write your review...',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    if (reviewController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Please write a review')),
+                      );
+                      return;
+                    }
+                    await _auctionService.addRating(
+                      item.id,
+                      rating,
+                      reviewController.text,
+                    );
+                    Navigator.pop(context);
+                  },
+                  child: Text('Submit'),
+                ),
+              ],
+            );
+          },
         );
       },
     );

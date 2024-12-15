@@ -1,11 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/auction_item.dart';
 import '../services/wallet_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:uuid/uuid.dart';
+import '../models/rating.dart';
 
 class AuctionService {
   final CollectionReference _auctionCollection =
       FirebaseFirestore.instance.collection('auction_items');
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final Uuid _uuid = Uuid();
 
   Future<void> addAuctionItem(AuctionItem item) async {
     await _auctionCollection.add({
@@ -36,12 +40,20 @@ class AuctionService {
   }
 
   Stream<Map<String, List<AuctionItem>>> getAuctionItems() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    
     return _auctionCollection.snapshots().map((snapshot) {
       final List<AuctionItem> liveAuctions = [];
       final List<AuctionItem> endedAuctions = [];
       
       for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
+        
+        // Skip if the auction belongs to the current user
+        if (data['sellerId'] == currentUser?.uid) {
+          continue;
+        }
+        
         final item = AuctionItem(
           id: doc.id,
           name: data['name'] ?? '',
@@ -311,39 +323,46 @@ class AuctionService {
     }
   }
 
-  Future<void> confirmDelivery(String itemId, String buyerId, String confirmationText) async {
-    final walletService = WalletService();
-    final doc = await _auctionCollection.doc(itemId).get();
-    final data = doc.data() as Map<String, dynamic>;
-    
-    await _auctionCollection.doc(itemId).update({
-      'deliveryConfirmed': true,
-      'confirmationText': confirmationText,
-      'confirmationTimestamp': FieldValue.serverTimestamp(),
-    });
+  Future<bool> confirmDelivery(String itemId, String buyerId, String confirmationText) async {
+    try {
+      final walletService = WalletService();
+      final doc = await _auctionCollection.doc(itemId).get();
+      final data = doc.data() as Map<String, dynamic>;
+      
+      await _auctionCollection.doc(itemId).update({
+        'deliveryConfirmed': true,
+        'confirmationText': confirmationText,
+        'confirmationTimestamp': FieldValue.serverTimestamp(),
+      });
 
-    // Transfer locked funds to seller
-    await walletService.transferFundsToSeller(
-      itemId, 
-      buyerId, 
-      data['sellerId'], 
-      (data['finalBid'] as num).toDouble()
-    );
+      // Transfer locked funds to seller
+      await walletService.transferFundsToSeller(
+        itemId, 
+        buyerId, 
+        data['sellerId'], 
+        (data['finalBid'] as num).toDouble()
+      );
 
-    // Create confirmation activity
-    await createActivity(
-      buyerId,
-      'confirmed',
-      'Delivery Confirmed',
-      'You confirmed delivery of ${data['name']}',
-    );
+      // Create confirmation activity
+      await createActivity(
+        buyerId,
+        'confirmed',
+        'Delivery Confirmed',
+        'You confirmed delivery of ${data['name']}',
+      );
 
-    await createActivity(
-      data['sellerId'],
-      'payment_received',
-      'Payment Received',
-      'Payment received for ${data['name']}',
-    );
+      await createActivity(
+        data['sellerId'],
+        'payment_received',
+        'Payment Received',
+        'Payment received for ${data['name']}',
+      );
+
+      return true;
+    } catch (e) {
+      print('Error confirming delivery: $e');
+      return false;
+    }
   }
 
   Stream<List<AuctionItem>> getAllAuctionsList() {
@@ -383,6 +402,57 @@ class AuctionService {
           confirmationText: data['confirmationText'],
         );
       }).toList();
+    });
+  }
+
+  Future<void> addRating(String auctionId, double rating, String review) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final doc = await _auctionCollection.doc(auctionId).get();
+    final data = doc.data() as Map<String, dynamic>;
+    
+    final newRating = Rating(
+      id: _uuid.v4(),
+      auctionId: auctionId,
+      sellerId: data['sellerId'],
+      buyerId: currentUser.uid,
+      buyerName: currentUser.displayName ?? 'Anonymous',
+      rating: rating,
+      review: review,
+      timestamp: DateTime.now(),
+    );
+
+    // Add rating to ratings collection
+    await _firestore.collection('ratings').add(newRating.toMap());
+
+    // Update auction document
+    await _auctionCollection.doc(auctionId).update({
+      'hasRating': true,
+    });
+
+    // Create activity for seller
+    await createActivity(
+      data['sellerId'],
+      'rated',
+      'New Rating Received',
+      'You received a ${rating.toStringAsFixed(1)} star rating for ${data['name']}',
+    );
+  }
+
+  Stream<double> getSellerRating(String sellerId) {
+    return _firestore
+        .collection('ratings')
+        .where('sellerId', isEqualTo: sellerId)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isEmpty) return 0.0;
+      
+      double totalRating = 0;
+      for (var doc in snapshot.docs) {
+        totalRating += (doc.data()['rating'] as num).toDouble();
+      }
+      return totalRating / snapshot.docs.length;
     });
   }
 }
