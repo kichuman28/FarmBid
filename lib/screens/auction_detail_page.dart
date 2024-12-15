@@ -6,6 +6,7 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'bid_page.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'delivery_success_page.dart';
 
 class AuctionDetailPage extends StatelessWidget {
   final AuctionItem item;
@@ -454,7 +455,13 @@ class AuctionDetailPage extends StatelessWidget {
                       rating,
                       reviewController.text,
                     );
-                    Navigator.pop(context);
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => DeliverySuccessPage(
+                          itemName: item.name,
+                        ),
+                      ),
+                    );
                   },
                   child: Text('Submit'),
                 ),
