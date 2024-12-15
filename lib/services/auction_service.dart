@@ -142,7 +142,45 @@ class AuctionService {
       final data = doc.data() as Map<String, dynamic>;
       final endTime = DateTime.parse(data['endTime']);
       if (now.isAfter(endTime)) {
-        await closeAuction(doc.id);
+        // Get the auction data
+        final bids = List<Map<String, dynamic>>.from(data['bids'] ?? []);
+        
+        if (bids.isNotEmpty) {
+          // Get highest bid
+          final highestBid = bids.reduce((a, b) => 
+            (a['amount'] as num) > (b['amount'] as num) ? a : b);
+          
+          // Update auction with winner info
+          await _auctionCollection.doc(doc.id).update({
+            'status': AuctionStatus.closed.toString(),
+            'winnerId': highestBid['bidderId'],
+            'winnerName': highestBid['bidderName'],
+            'finalBid': highestBid['amount'],
+            'closedAt': FieldValue.serverTimestamp(),
+          });
+
+          // Create activity for winner
+          await createActivity(
+            highestBid['bidderId'],
+            'won',
+            'Won Auction!',
+            'You won the auction for ${data['name']} at ₹${highestBid['amount']}',
+          );
+
+          // Create activity for seller
+          await createActivity(
+            data['sellerId'],
+            'sold',
+            'Auction Closed',
+            '${data['name']} was sold for ₹${highestBid['amount']}',
+          );
+        } else {
+          // No bids, just close the auction
+          await _auctionCollection.doc(doc.id).update({
+            'status': AuctionStatus.closed.toString(),
+            'closedAt': FieldValue.serverTimestamp(),
+          });
+        }
       }
     }
   }
@@ -196,5 +234,52 @@ class AuctionService {
         );
       }).toList();
     });
+  }
+
+  Future<void> endAuctionNow(String itemId) async {
+    final doc = await _auctionCollection.doc(itemId).get();
+    final data = doc.data() as Map<String, dynamic>;
+    
+    // Get the auction data
+    final bids = List<Map<String, dynamic>>.from(data['bids'] ?? []);
+    
+    if (bids.isNotEmpty) {
+      // Get highest bid
+      final highestBid = bids.reduce((a, b) => 
+        (a['amount'] as num) > (b['amount'] as num) ? a : b);
+      
+      // Update auction with winner info
+      await _auctionCollection.doc(itemId).update({
+        'status': AuctionStatus.closed.toString(),
+        'winnerId': highestBid['bidderId'],
+        'winnerName': highestBid['bidderName'],
+        'finalBid': highestBid['amount'],
+        'closedAt': FieldValue.serverTimestamp(),
+        'endedEarly': true,
+      });
+
+      // Create activity for winner
+      await createActivity(
+        highestBid['bidderId'],
+        'won',
+        'Won Auction!',
+        'You won the auction for ${data['name']} at ₹${highestBid['amount']}',
+      );
+
+      // Create activity for seller
+      await createActivity(
+        data['sellerId'],
+        'sold',
+        'Auction Ended Early',
+        '${data['name']} was sold for ₹${highestBid['amount']}',
+      );
+    } else {
+      // No bids, just close the auction
+      await _auctionCollection.doc(itemId).update({
+        'status': AuctionStatus.closed.toString(),
+        'closedAt': FieldValue.serverTimestamp(),
+        'endedEarly': true,
+      });
+    }
   }
 }

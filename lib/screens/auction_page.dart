@@ -41,6 +41,15 @@ class _AuctionPageState extends State<AuctionPage> with SingleTickerProviderStat
   void initState() {
     super.initState();
     _checkAndShowTutorial();
+    _startPeriodicCheck();
+  }
+
+  void _startPeriodicCheck() {
+    // Check every minute for expired auctions
+    Future.delayed(Duration(seconds: 5), () async {
+      await _auctionService.checkExpiredAuctions();
+      _startPeriodicCheck();
+    });
   }
 
   Future<void> _checkAndShowTutorial() async {
@@ -287,70 +296,22 @@ class _AuctionPageState extends State<AuctionPage> with SingleTickerProviderStat
     );
   }
 
-  void _showCloseAuctionDialog(BuildContext context, String itemId, DateTime endTime) {
-    final remainingTime = endTime.difference(DateTime.now());
-
-    if (remainingTime.isNegative) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Close Auction'),
-            content: Text('Are you sure you want to close this auction?'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
-                },
-                child: Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await _auctionService.closeAuction(itemId);
-                  Navigator.of(context).pop(); // Close the dialog
-                  setState(() {}); // Refresh the UI
-                },
-                child: Text('Confirm'),
-              ),
-            ],
-          );
-        },
-      );
-    } else {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Cannot Close Auction'),
-            content: Text('You can only close the auction after it has ended.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
-                },
-                child: Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-    }
-  }
-
   Widget _getStatusIndicator(AuctionItem item) {
-    Color color;
-    if (item.endTime.isAfter(DateTime.now())) {
-      color = Colors.red; // Active auction
-    } else if (item.status == AuctionStatus.closed) {
-      color = Colors.green; // Auction completely over
-    } else {
-      color = Colors.yellow; // Bidding time over but unsold
+    if (item.status == AuctionStatus.closed) {
+      return Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          color: Colors.green,
+          shape: BoxShape.circle,
+        ),
+      );
     }
     return Container(
       width: 10,
       height: 10,
       decoration: BoxDecoration(
-        color: color,
+        color: item.endTime.isAfter(DateTime.now()) ? Colors.blue : Colors.red,
         shape: BoxShape.circle,
       ),
     );
@@ -423,17 +384,7 @@ class _AuctionPageState extends State<AuctionPage> with SingleTickerProviderStat
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _getStatusIndicator(item),
-                    SizedBox(width: 8),
-                    if (item.endTime.isBefore(DateTime.now()) && 
-                        item.status != AuctionStatus.closed)
-                      IconButton(
-                        icon: Icon(Icons.check_circle_outline),
-                        onPressed: () => _showCloseAuctionDialog(
-                          context,
-                          item.id,
-                          item.endTime,
-                        ),
-                      ),
+
                   ],
                 ),
                 onTap: () => Navigator.push(
@@ -526,4 +477,5 @@ class _AuctionPageState extends State<AuctionPage> with SingleTickerProviderStat
       return '${duration.inSeconds}s';
     }
   }
+
 }

@@ -51,38 +51,6 @@ class AuctionDetailPage extends StatelessWidget {
     );
   }
 
-  void _showCloseAuctionDialog(BuildContext context) {
-    final User? currentUser = FirebaseAuth.instance.currentUser;
-    
-    if (currentUser?.uid != item.sellerId) {
-      return; // Only seller can close the auction
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Close Auction'),
-          content: Text('Are you sure you want to close this auction?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                await _auctionService.closeAuction(item.id);
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Return to previous screen
-              },
-              child: Text('Confirm'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final highestBid = item.bids.isNotEmpty
@@ -96,12 +64,19 @@ class AuctionDetailPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(item.name),
         actions: [
-          if (isOwner && item.endTime.isBefore(DateTime.now()) && 
-              item.status != AuctionStatus.closed)
-            IconButton(
-              icon: Icon(Icons.check_circle_outline),
-              onPressed: () => _showCloseAuctionDialog(context),
-              tooltip: 'Close Auction',
+          if (isOwner && item.status != AuctionStatus.closed)
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'end') {
+                  _showEndAuctionDialog(context);
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'end',
+                  child: Text('End Auction Now'),
+                ),
+              ],
             ),
         ],
       ),
@@ -295,5 +270,36 @@ class AuctionDetailPage extends StatelessWidget {
     if (await canLaunch(url)) {
       await launch(url);
     }
+  }
+
+  void _showEndAuctionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('End Auction Now'),
+          content: Text('Are you sure you want to end this auction immediately?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await _auctionService.endAuctionNow(item.id);
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              },
+              child: Text('End Now'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
