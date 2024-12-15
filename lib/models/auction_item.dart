@@ -15,13 +15,17 @@ class AuctionItem {
   final String category;
   final String otherCategoryDescription;
   final double startingBid;
-  double currentBid;
+  final double currentBid;
   final String sellerId;
   final String sellerName;
   final List<Bid> bids;
   final DateTime endTime;
   final AuctionStatus status;
   final List<String> images;
+  final String? winnerId;
+  final String? winnerName;
+  final bool? deliveryConfirmed;
+  final String? confirmationText;
 
   AuctionItem({
     required this.id,
@@ -41,6 +45,10 @@ class AuctionItem {
     required this.endTime,
     required this.status,
     required this.images,
+    this.winnerId,
+    this.winnerName,
+    this.deliveryConfirmed,
+    this.confirmationText,
   });
 
   Map<String, dynamic> toMap() {

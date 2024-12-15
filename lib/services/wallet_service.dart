@@ -117,12 +117,20 @@ class WalletService {
     final sellerWalletRef = _firestore.collection('wallets').doc(sellerId);
 
     await _firestore.runTransaction((transaction) async {
-      // Release locked funds from buyer
+      // First, get all documents
       final buyerWalletDoc = await transaction.get(buyerWalletRef);
-      final buyerWallet = Wallet.fromMap(buyerWalletDoc.data()!);
+      final sellerWalletDoc = await transaction.get(sellerWalletRef);
 
-      Map<String, double> newBuyerLockedFunds =
-          Map.from(buyerWallet.lockedFunds);
+      if (!buyerWalletDoc.exists || !sellerWalletDoc.exists) {
+        throw Exception('Wallet not found');
+      }
+
+      // Then process the data
+      final buyerWallet = Wallet.fromMap(buyerWalletDoc.data()!);
+      final sellerWallet = Wallet.fromMap(sellerWalletDoc.data()!);
+
+      // Prepare the updates
+      Map<String, double> newBuyerLockedFunds = Map.from(buyerWallet.lockedFunds);
       newBuyerLockedFunds.remove(auctionId);
 
       final buyerTransaction = WalletTransaction(
@@ -134,16 +142,6 @@ class WalletService {
         description: 'Auction payment',
       );
 
-      transaction.update(buyerWalletRef, {
-        'balance': buyerWallet.balance - amount,
-        'lockedFunds': newBuyerLockedFunds,
-        'transactions': FieldValue.arrayUnion([buyerTransaction.toMap()]),
-      });
-
-      // Add funds to seller
-      final sellerWalletDoc = await transaction.get(sellerWalletRef);
-      final sellerWallet = Wallet.fromMap(sellerWalletDoc.data()!);
-
       final sellerTransaction = WalletTransaction(
         id: _uuid.v4(),
         type: 'transfer',
@@ -152,6 +150,13 @@ class WalletService {
         relatedAuctionId: auctionId,
         description: 'Auction payment received',
       );
+
+      // Finally, perform all updates
+      transaction.update(buyerWalletRef, {
+        'balance': buyerWallet.balance - amount,
+        'lockedFunds': newBuyerLockedFunds,
+        'transactions': FieldValue.arrayUnion([buyerTransaction.toMap()]),
+      });
 
       transaction.update(sellerWalletRef, {
         'balance': sellerWallet.balance + amount,

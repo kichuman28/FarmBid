@@ -35,11 +35,14 @@ class AuctionService {
     );
   }
 
-  Stream<List<AuctionItem>> getAuctionItems() {
+  Stream<Map<String, List<AuctionItem>>> getAuctionItems() {
     return _auctionCollection.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final List<AuctionItem> liveAuctions = [];
+      final List<AuctionItem> endedAuctions = [];
+      
+      for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
-        return AuctionItem(
+        final item = AuctionItem(
           id: doc.id,
           name: data['name'] ?? '',
           description: data['description'] ?? '',
@@ -66,8 +69,29 @@ class AuctionService {
             orElse: () => AuctionStatus.upcoming,
           ),
           images: List<String>.from(data['images'] ?? []),
+          winnerId: data['winnerId'],
+          winnerName: data['winnerName'],
+          deliveryConfirmed: data['deliveryConfirmed'] ?? false,
+          confirmationText: data['confirmationText'],
         );
-      }).toList();
+        
+        final now = DateTime.now();
+        if (item.status != AuctionStatus.closed && item.endTime.isAfter(now)) {
+          liveAuctions.add(item);
+        } else {
+          endedAuctions.add(item);
+        }
+      }
+      
+      // Sort live auctions by newest first
+      liveAuctions.sort((a, b) => b.endTime.compareTo(a.endTime));
+      // Sort ended auctions by recently ended first
+      endedAuctions.sort((a, b) => b.endTime.compareTo(a.endTime));
+      
+      return {
+        'live': liveAuctions,
+        'ended': endedAuctions,
+      };
     });
   }
 
@@ -231,6 +255,10 @@ class AuctionService {
             orElse: () => AuctionStatus.upcoming,
           ),
           images: List<String>.from(data['images'] ?? []),
+          winnerId: data['winnerId'],
+          winnerName: data['winnerName'],
+          deliveryConfirmed: data['deliveryConfirmed'] ?? false,
+          confirmationText: data['confirmationText'],
         );
       }).toList();
     });
@@ -281,5 +309,80 @@ class AuctionService {
         'endedEarly': true,
       });
     }
+  }
+
+  Future<void> confirmDelivery(String itemId, String buyerId, String confirmationText) async {
+    final walletService = WalletService();
+    final doc = await _auctionCollection.doc(itemId).get();
+    final data = doc.data() as Map<String, dynamic>;
+    
+    await _auctionCollection.doc(itemId).update({
+      'deliveryConfirmed': true,
+      'confirmationText': confirmationText,
+      'confirmationTimestamp': FieldValue.serverTimestamp(),
+    });
+
+    // Transfer locked funds to seller
+    await walletService.transferFundsToSeller(
+      itemId, 
+      buyerId, 
+      data['sellerId'], 
+      (data['finalBid'] as num).toDouble()
+    );
+
+    // Create confirmation activity
+    await createActivity(
+      buyerId,
+      'confirmed',
+      'Delivery Confirmed',
+      'You confirmed delivery of ${data['name']}',
+    );
+
+    await createActivity(
+      data['sellerId'],
+      'payment_received',
+      'Payment Received',
+      'Payment received for ${data['name']}',
+    );
+  }
+
+  Stream<List<AuctionItem>> getAllAuctionsList() {
+    return _auctionCollection.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return AuctionItem(
+          id: doc.id,
+          name: data['name'] ?? '',
+          description: data['description'] ?? '',
+          location: data['location'] ?? '',
+          latitude: (data['latitude'] ?? 0).toDouble(),
+          longitude: (data['longitude'] ?? 0).toDouble(),
+          quantity: data['quantity'] ?? 0,
+          category: data['category'] ?? '',
+          otherCategoryDescription: data['otherCategoryDescription'] ?? '',
+          startingBid: (data['startingBid'] ?? 0).toDouble(),
+          currentBid: (data['currentBid'] ?? 0).toDouble(),
+          sellerId: data['sellerId'] ?? '',
+          sellerName: data['sellerName'] ?? '',
+          bids: ((data['bids'] ?? []) as List)
+              .map((bid) => Bid(
+                    bidderId: bid['bidderId'] ?? '',
+                    bidderName: bid['bidderName'] ?? '',
+                    amount: (bid['amount'] ?? 0).toDouble(),
+                  ))
+              .toList(),
+          endTime: DateTime.parse(data['endTime']),
+          status: AuctionStatus.values.firstWhere(
+            (e) => e.toString() == data['status'],
+            orElse: () => AuctionStatus.upcoming,
+          ),
+          images: List<String>.from(data['images'] ?? []),
+          winnerId: data['winnerId'],
+          winnerName: data['winnerName'],
+          deliveryConfirmed: data['deliveryConfirmed'] ?? false,
+          confirmationText: data['confirmationText'],
+        );
+      }).toList();
+    });
   }
 }

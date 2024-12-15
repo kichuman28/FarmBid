@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../tutorial/auction_page_tutorial.dart';
 import '../tutorial/tutorial_overlay.dart';
 import '../tutorial/tutorial_controller.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class AuctionPage extends StatefulWidget {
   @override
@@ -135,128 +136,162 @@ class _AuctionPageState extends State<AuctionPage> with SingleTickerProviderStat
   }
 
   Widget _buildAvailableAuctionsTab() {
-    final User? currentUser = FirebaseAuth.instance.currentUser;
-    
-    return StreamBuilder<List<AuctionItem>>(
+    return StreamBuilder<Map<String, List<AuctionItem>>>(
       stream: _auctionService.getAuctionItems(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
 
-        final allAuctionItems = snapshot.data ?? [];
-        // Filter out auctions owned by the current user
-        final auctionItems = allAuctionItems
-            .where((item) => item.sellerId != currentUser?.uid)
-            .toList();
-        
-        if (auctionItems.isEmpty) {
+        if (!snapshot.hasData || 
+            (snapshot.data!['live']!.isEmpty && snapshot.data!['ended']!.isEmpty)) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.gavel_outlined, size: 64, color: Colors.grey),
+                Icon(Icons.local_offer_outlined, size: 64, color: Colors.grey),
                 SizedBox(height: 16),
-                Text('No auctions available'),
+                Text(
+                  'No auctions available',
+                  style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                ),
               ],
             ),
           );
         }
 
-        return ListView.builder(
-          padding: EdgeInsets.all(8),
-          itemCount: auctionItems.length,
-          itemBuilder: (context, index) {
-            final item = auctionItems[index];
-            return Card(
-              margin: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              child: InkWell(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AuctionDetailPage(item: item),
+        return ListView(
+          children: [
+            if (snapshot.data!['live']!.isNotEmpty) ...[
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Live Auctions',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
                   ),
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Image section
-                    Container(
-                      width: 120,
-                      height: 120,
-                      child: item.images.isNotEmpty
-                          ? Image.network(
-                              item.images[0],
-                              fit: BoxFit.cover,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Center(child: CircularProgressIndicator());
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey[200],
-                                  child: Icon(Icons.error_outline, color: Colors.red),
-                                );
-                              },
-                            )
-                          : Container(
-                              color: Colors.grey[200],
-                              child: Icon(Icons.image_not_supported, color: Colors.grey),
-                            ),
-                    ),
-                    // Content section
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.name,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              item.description,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '₹${item.currentBid}',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green,
-                                  ),
-                                ),
-                                Text(
-                                  _formatRemainingTime(item.endTime.difference(DateTime.now())),
-                                  style: TextStyle(color: Colors.grey[600]),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+              ),
+              ...snapshot.data!['live']!.map((item) => _buildAuctionCard(item, true)),
+            ],
+            
+            if (snapshot.data!['ended']!.isNotEmpty) ...[
+              Padding(
+                padding: EdgeInsets.fromLTRB(16, 32, 16, 16),
+                child: Text(
+                  'Ended Auctions',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[600],
+                  ),
                 ),
               ),
-            );
-          },
+              ...snapshot.data!['ended']!.map((item) => _buildAuctionCard(item, false)),
+            ],
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildAuctionCard(AuctionItem item, bool isLive) {
+    final remainingTime = item.endTime.difference(DateTime.now());
+    
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AuctionDetailPage(item: item),
+        ),
+      ),
+      child: Card(
+        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        elevation: isLive ? 4 : 1,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image section
+            if (item.images.isNotEmpty)
+              Container(
+                height: 200,
+                width: double.infinity,
+                child: Image.network(
+                  item.images[0],
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[200],
+                      child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                    );
+                  },
+                ),
+              )
+            else
+              Container(
+                height: 200,
+                color: Colors.grey[200],
+                child: Center(
+                  child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                ),
+              ),
+            // Info section
+            ListTile(
+              title: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  _getStatusIndicator(item),
+                ],
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.monetization_on, size: 16, color: Colors.green),
+                      SizedBox(width: 4),
+                      Text(
+                        '₹${item.currentBid.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.timer, size: 16, 
+                        color: isLive ? Colors.blue : Colors.grey),
+                      SizedBox(width: 4),
+                      Text(
+                        isLive 
+                          ? _formatRemainingTime(remainingTime)
+                          : 'Ended ${timeago.format(item.endTime)}',
+                        style: TextStyle(
+                          color: isLive ? Colors.blue : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -321,7 +356,7 @@ class _AuctionPageState extends State<AuctionPage> with SingleTickerProviderStat
     final User? currentUser = FirebaseAuth.instance.currentUser;
     
     return StreamBuilder<List<AuctionItem>>(
-      stream: _auctionService.getAuctionItems(),
+      stream: _auctionService.getAllAuctionsList(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());

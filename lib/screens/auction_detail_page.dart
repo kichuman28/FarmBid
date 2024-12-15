@@ -59,6 +59,10 @@ class AuctionDetailPage extends StatelessWidget {
     final remainingTime = item.endTime.difference(DateTime.now());
     final User? currentUser = FirebaseAuth.instance.currentUser;
     final bool isOwner = currentUser?.uid == item.sellerId;
+    final bool isWinner = currentUser?.uid == item.winnerId;
+    final bool canConfirm = isWinner && 
+                          item.status == AuctionStatus.closed && 
+                          !(item.deliveryConfirmed ?? false);
 
     return Scaffold(
       appBar: AppBar(
@@ -158,7 +162,13 @@ class AuctionDetailPage extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: !isOwner && item.status != AuctionStatus.closed ? Container(
+      bottomNavigationBar: canConfirm ? Container(
+        padding: EdgeInsets.all(16),
+        child: ElevatedButton(
+          onPressed: () => _showConfirmationDialog(context),
+          child: Text('Confirm Delivery'),
+        ),
+      ) : (!isOwner && item.status != AuctionStatus.closed ? Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -216,7 +226,7 @@ class AuctionDetailPage extends StatelessWidget {
             ),
           ],
         ),
-      ) : null,
+      ) : null),
     );
   }
 
@@ -298,6 +308,87 @@ class AuctionDetailPage extends StatelessWidget {
               ),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _showConfirmationDialog(BuildContext context) {
+    final TextEditingController confirmationController = TextEditingController();
+    bool isAgreed = false;
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Confirm Product Delivery'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Please confirm that you have received the product and are satisfied with it.'),
+                  SizedBox(height: 16),
+                  TextField(
+                    controller: confirmationController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Confirmation Message',
+                      hintText: 'I confirm that I have received the product and am satisfied with it.',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isAgreed,
+                        onChanged: (value) {
+                          setState(() {
+                            isAgreed = value ?? false;
+                          });
+                        },
+                      ),
+                      Expanded(
+                        child: Text(
+                          'I agree that by confirming, the locked funds will be transferred to the seller and this action cannot be undone.',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: !isAgreed ? null : () async {
+                    if (confirmationController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Please enter a confirmation message')),
+                      );
+                      return;
+                    }
+                    
+                    final currentUser = FirebaseAuth.instance.currentUser;
+                    if (currentUser != null) {
+                      await _auctionService.confirmDelivery(
+                        item.id,
+                        currentUser.uid,
+                        confirmationController.text,
+                      );
+                      Navigator.pop(context); // Close dialog
+                      Navigator.pop(context); // Return to previous screen
+                    }
+                  },
+                  child: Text('Confirm Delivery'),
+                ),
+              ],
+            );
+          }
         );
       },
     );
