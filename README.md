@@ -1,16 +1,34 @@
-# app
+# FarmBid - Agricultural Auction Platform
 
-A new Flutter project.
+FarmBid is a mobile application built with Flutter that revolutionizes agricultural product trading through a real-time auction system. It creates a direct bridge between farmers and buyers, eliminating intermediaries and ensuring fair pricing for agricultural products.
 
-## Getting Started
+## Project Overview
 
-This project is a starting point for a Flutter application.
+FarmBid empowers farmers to list their agricultural products for auction while providing buyers with a transparent bidding platform. The app supports both pre-harvest listings and ready-to-sell products, making it versatile for different agricultural trading needs.
 
-A few resources to get you started if this is your first Flutter project:
+### Core Features
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+#### Auction System
+- Live and Pre-harvest auctions
+- Real-time bidding with instant updates
+- Automatic auction closure system
+- Bid history tracking
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+#### Location & Delivery
+- GPS-based product discovery
+- Self-pickup option with location sharing
+- Google Maps integration for route planning
+
+#### Payment & Transaction
+- Secure in-app wallet system
+- Automated fund locking during bidding
+- Commission handling for platform sustainability
+- Transaction history tracking
+
+#### User Features
+- Seller and buyer profiles
+- Product rating and review system
+- Delivery confirmation system
+- Transaction history
+- Customized notifications
+
