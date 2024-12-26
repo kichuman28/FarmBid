@@ -42,3 +42,25 @@ FarmBid empowers farmers to list their agricultural products for auction while p
 - Transaction history
 - Customized notifications
 
+## Technical Integrations
+
+### Firebase Integration
+Firebase serves as the backend infrastructure, providing:
+- Real-time database for live auctions and bidding
+- User authentication and profile management
+- Cloud storage for product images
+- Secure transaction handling
+
+### Cloudinary Integration
+Cloudinary manages all image-related operations:
+- Secure image upload and storage
+- Image optimization and compression
+- Multiple image format support
+- Fast image delivery through CDN
+
+### Razorpay Integration
+Razorpay handles all payment-related functionalities:
+- Secure payment gateway
+- Multiple payment methods (UPI, Cards, Net Banking)
+- Automated wallet transactions
+- Payment verification system
