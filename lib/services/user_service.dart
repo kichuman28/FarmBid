@@ -1,5 +1,5 @@
 // lib/services/user_service.dart
-import 'package:app/models/activity_item.dart';
+import 'package:FarmBid/models/activity_item.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserService {

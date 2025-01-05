@@ -1,5 +1,5 @@
-import 'package:app/models/auction_item.dart';
-import 'package:app/models/pre_auction_listing.dart';
+import 'package:FarmBid/models/auction_item.dart';
+import 'package:FarmBid/models/pre_auction_listing.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PreAuctionService {
