@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:app/tutorial/tutorial_overlay.dart';
+import 'package:FarmBid/tutorial/tutorial_overlay.dart';
 
 class AuctionPageTutorial {
   static List<TutorialStep> getSteps(BuildContext context, List<GlobalKey> keys) {

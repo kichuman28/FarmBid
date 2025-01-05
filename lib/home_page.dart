@@ -1,13 +1,13 @@
-import 'package:app/screens/add_pre_auction_page.dart';
-import 'package:app/screens/add_product_page.dart';
-import 'package:app/services/pre_auction_service.dart';
+import 'package:FarmBid/screens/add_pre_auction_page.dart';
+import 'package:FarmBid/screens/add_product_page.dart';
+import 'package:FarmBid/services/pre_auction_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login_page.dart';
-import 'package:app/tutorial/home_page_tutorial.dart';
-import 'package:app/tutorial/tutorial_overlay.dart';
+import 'package:FarmBid/tutorial/home_page_tutorial.dart';
+import 'package:FarmBid/tutorial/tutorial_overlay.dart';
 
 class HomePage extends StatefulWidget {
   @override
