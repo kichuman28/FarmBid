@@ -150,7 +150,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 - Product delivery tracking
 - User authentication and profile management
 
-[View Release Notes](https://github.com/abelboby/FarmBid/releases/tag/v1.0.0)
+[View Release Notes](https://github.com/abelboby/FarmBid/releases/tag/v0.1.0-beta)
 
 [View All Releases](https://github.com/abelboby/FarmBid/releases)
 
