@@ -9,49 +9,48 @@
   <strong>Empowering Farmers, Connecting Buyers, Transforming Agriculture</strong>
 </p>
 
-## 📱 App Screenshots
+## 📸 App Screenshots
 
-### 🏠 Core Screens
+### 🔐 User Authentication
 <p align="center">
-  <img src="assets/screenshots/splash.png" width="200" alt="Splash Screen"/>
-  <img src="assets/screenshots/onboarding.png" width="200" alt="Onboarding"/>
-  <img src="assets/screenshots/home.png" width="200" alt="Home Screen"/>
-</p>
-
-### 🔐 Authentication
-<p align="center">
-  <img src="assets/screenshots/login.png" width="200" alt="Login Screen"/>
-  <img src="assets/screenshots/signup.png" width="200" alt="Registration"/>
+  <img src="assets/screenshots/onboarding.png" width="200" alt="Login Screen"/>
+  <img src="assets/screenshots/homepage.png" width="200" alt="Home Screen"/>
   <img src="assets/screenshots/profile.png" width="200" alt="Profile Screen"/>
 </p>
 
-### 🏆 Auction Features
+### 🏆 Auction System
 <p align="center">
-  <img src="assets/screenshots/live_auctions.png" width="200" alt="Live Auctions"/>
-  <img src="assets/screenshots/auction_details.png" width="200" alt="Auction Details"/>
-  <img src="assets/screenshots/bidding.png" width="200" alt="Bidding Screen"/>
+  <img src="assets/screenshots/available_auctions.png" width="200" alt="Live Auctions"/>
+  <img src="assets/screenshots/auctiondetails.png" width="200" alt="Auction Details"/>
+  <img src="assets/screenshots/bidpage.png" width="200" alt="Bidding Screen"/>
 </p>
 
-### 💰 Wallet & Transactions
+### 💰 Payments & Transactions
 <p align="center">
   <img src="assets/screenshots/wallet.png" width="200" alt="Wallet Screen"/>
-  <img src="assets/screenshots/transaction_history.png" width="200" alt="Transaction History"/>
-  <img src="assets/screenshots/payment.png" width="200" alt="Payment Screen"/>
+  <img src="assets/screenshots/add_funds.png" width="200" alt="Add Funds"/>
+  <img src="assets/screenshots/razorpay_payment_initialized.png" width="200" alt="Transaction History"/>
 </p>
 
 ### 📦 Product Management
 <p align="center">
   <img src="assets/screenshots/add_product.png" width="200" alt="Add Product"/>
-  <img src="assets/screenshots/product_list.png" width="200" alt="Product List"/>
+  <img src="assets/screenshots/my_products.jpg" width="200" alt="My Products"/>
   <img src="assets/screenshots/product_details.png" width="200" alt="Product Details"/>
 </p>
 
-### 📍 Location & Delivery
+### 🎥 Product Delivery Process
 <p align="center">
-  <img src="assets/screenshots/map_view.png" width="200" alt="Map View"/>
-  <img src="assets/screenshots/delivery_tracking.png" width="200" alt="Delivery Tracking"/>
-  <img src="assets/screenshots/location_picker.png" width="200" alt="Location Picker"/>
+  <video width="400" controls>
+    <source src="assets/videos/delivery_process.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
 </p>
+
+Watch how winners receive their products after successful auctions, featuring:
+- Delivery confirmation process
+- Quality verification
+- Secure handover protocol
 
 ## ✨ Features
 
@@ -125,7 +124,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/FarmBid.git
+git clone https://github.com/abelboby/FarmBid.git
 
 # Navigate to project directory
 cd FarmBid
@@ -141,13 +140,27 @@ flutter run
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
-## 📄 License
+## 📲 Download FarmBid
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Latest Release
+[![Release](https://img.shields.io/github/v/release/abelboby/FarmBid?include_prereleases&style=for-the-badge)](https://github.com/abelboby/FarmBid/releases)
 
-## 📞 Support
+#### v1.0.0 (Latest)
+- Initial release of FarmBid
+- Live auction system with real-time bidding
+- Secure payment integration with RazorPay
+- Future harvest listings
+- Product delivery tracking
+- User authentication and profile management
 
-For support, email support@farmbid.com or join our Slack channel.
+[View Release Notes](https://github.com/abelboby/FarmBid/releases/tag/v1.0.0)
+
+[View All Releases](https://github.com/abelboby/FarmBid/releases)
+
+#### System Requirements
+- Android 5.0 (API level 21) or higher
+- 100 MB free storage space
+- Internet connection required
 
 ---
 
