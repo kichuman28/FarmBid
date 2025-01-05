@@ -41,10 +41,7 @@
 
 ### 🎥 Product Delivery Process
 <p align="center">
-  <video width="400" controls>
-    <source src="[Delivery_process](https://github.com/user-attachments/assets/8d1740e9-3497-4701-96e7-18035e046d4a)" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  https://github.com/user-attachments/assets/8d1740e9-3497-4701-96e7-18035e046d4a
 </p>
 
 
