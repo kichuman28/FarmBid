@@ -42,10 +42,14 @@
 ### 🎥 Product Delivery Process
 <p align="center">
   <video width="400" controls>
-    <source src="assets/videos/delivery_process.mp4" type="video/mp4">
+    <source src="[Delivery_process](https://github.com/user-attachments/assets/8d1740e9-3497-4701-96e7-18035e046d4a)" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </p>
+
+
+https://github.com/user-attachments/assets/8d1740e9-3497-4701-96e7-18035e046d4a
+
 
 Watch how winners receive their products after successful auctions, featuring:
 - Delivery confirmation process
