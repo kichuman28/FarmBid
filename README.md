@@ -40,11 +40,6 @@
 </p>
 
 ### 🎥 Product Delivery Process
-<p align="center">
-  https://github.com/user-attachments/assets/8d1740e9-3497-4701-96e7-18035e046d4a
-</p>
-
-
 https://github.com/user-attachments/assets/8d1740e9-3497-4701-96e7-18035e046d4a
 
 
